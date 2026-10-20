@@ -1,0 +1,30 @@
+import express from "express";
+import path from "node:path";
+import { authRoutes } from "./routes/auth.routes";
+import { permissionRouter } from "./routes/permission.routes";
+import { roleRouter } from "./routes/role.routes";
+import { courseRouter } from "./routes/courses.routes";
+import enrollmentRoutes from "./routes/enrollments.routes";
+import cors from "cors";
+import { civilServantRoutes } from "./routes/civilServant.routes";
+import { userRoutes } from "./routes/user.routes";
+import { studentRoutes } from "./routes/student.routes";
+import { campusRoutes } from "./routes/campus.routes";
+
+const app = express();
+
+app.use(express.json());
+app.use(cors());
+app.use("/uploads/covers", express.static(path.resolve(process.cwd(), "uploads/covers")));
+
+app.use("/auth", authRoutes);
+app.use(permissionRouter);
+app.use(roleRouter);
+app.use(courseRouter);
+app.use("/enrollments", enrollmentRoutes);
+app.use(civilServantRoutes);
+app.use(userRoutes);
+app.use(studentRoutes);
+app.use(campusRoutes);
+
+export { app };

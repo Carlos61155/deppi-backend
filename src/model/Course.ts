@@ -1,0 +1,29 @@
+export interface CreateCourseInput {
+  campusId: string;
+  title: string;
+  description?: string;
+  actionType: string;
+  thematicArea: string;
+  extensionLine: string;
+  startDate: Date;
+  endDate: Date;
+  minParticipants: number;
+  maxParticipants: number;
+  workload: number;
+  location: string;
+  funding?: string;
+  institutionalProgram?: string;
+  offeringModel: string;
+  targetMunicipalities: string;
+  evaluationMethods: string;
+  marketingMethods: string;
+  activitiesPerformed: string;
+  responsibleName: string;
+  presentation: string;
+  justification: string;
+  targetAudience: string;
+  generalObjective: string;
+  specificObjective: string;
+  methodology: string;
+  coverImageUrl?: string;
+}

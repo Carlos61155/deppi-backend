@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: deppi-extension
+    restart: always
+    environment:
+      POSTGRES_USER: deppi_extension_user
+      POSTGRES_PASSWORD: deppi_extension_password
+      POSTGRES_DB: deppi_extension_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
