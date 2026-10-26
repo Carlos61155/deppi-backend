@@ -1,4 +1,4 @@
-import { prisma } from '../lib/prisma';
+import { prisma } from "../lib/prisma";
 import { CreateCourseInput } from "../model/Course";
 
 export class CourseService {
@@ -22,21 +22,21 @@ export class CourseService {
         ...data,
         startDate: new Date(data.startDate),
         endDate: new Date(data.endDate),
-      }
+      },
     });
   }
 
   async findAll() {
     return await prisma.course.findMany({
       orderBy: {
-        startDate: 'desc'
-      }
+        startDate: "desc",
+      },
     });
   }
 
   async closeCourse(courseId: string) {
     const courseExists = await prisma.course.findUnique({
-      where: { id: courseId }
+      where: { id: courseId },
     });
 
     if (!courseExists) {
@@ -87,23 +87,50 @@ export class CourseService {
   }
 
   async getGeneralReport() {
-    const [totalCourses, totalStudents, totalCivilServants, totalEnrollments,] = await Promise.all([
-      prisma.course.count(),
-      prisma.student.count(),
-      prisma.civilServant.count(),
-      prisma.enrollment.count(),
-    ]);
-    return {
+    const [
+      totalUsers,
       totalCourses,
       totalStudents,
       totalCivilServants,
       totalEnrollments,
+      totalCampus,
+      activeCourses,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.course.count(),
+      prisma.student.count(),
+      prisma.civilServant.count(),
+      prisma.enrollment.count(),
+      prisma.campus.count(),
+      prisma.course.findMany({
+        where: { isActive: true },
+        select: {
+          maxParticipants: true,
+          _count: {
+            select: { enrollments: true },
+          },
+        },
+      }),
+    ]);
+
+    const totalRemainingSpots = activeCourses.reduce((total, course) => {
+      const remaining = course.maxParticipants - course._count.enrollments;
+      return total + Math.max(0, remaining);
+    }, 0);
+    return {
+      totalUsers,
+      totalCourses,
+      totalStudents,
+      totalCivilServants,
+      totalEnrollments,
+      totalCampus,
+      totalRemainingSpots,
     };
   }
 
   async delete(id: string) {
     const courseExists = await prisma.course.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!courseExists) {
@@ -111,21 +138,25 @@ export class CourseService {
     }
 
     return await prisma.course.delete({
-      where: { id }
+      where: { id },
     });
   }
 
   async update(id: string, data: Partial<CreateCourseInput>) {
     const courseExists = await prisma.course.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!courseExists) {
       throw new Error("Curso não encontrado.");
     }
 
-    const finalStartDate = data.startDate ? new Date(data.startDate) : courseExists.startDate;
-    const finalEndDate = data.endDate ? new Date(data.endDate) : courseExists.endDate;
+    const finalStartDate = data.startDate
+      ? new Date(data.startDate)
+      : courseExists.startDate;
+    const finalEndDate = data.endDate
+      ? new Date(data.endDate)
+      : courseExists.endDate;
 
     if (finalStartDate >= finalEndDate) {
       throw new Error("A data de início deve ser anterior à data de término.");
@@ -137,7 +168,7 @@ export class CourseService {
 
     return await prisma.course.update({
       where: { id },
-      data: updateData
+      data: updateData,
     });
   }
 }
