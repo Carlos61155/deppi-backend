@@ -13,6 +13,7 @@ import {
   rejectEnrollment,
   cancelEnrollment,
   getEnrollmentsByStatusReport,
+  listEnrollmentsByStatus,
 } from "../controllers/EnrollmentController";
 
 const router = Router();
@@ -24,6 +25,7 @@ router.patch("/:enrollmentId/status", validate(updateEnrollmentStatusSchema), up
 router.get("/:enrollmentId/history", listHistory);
 router.get("/course/:courseId", permissionMiddleware("MANAGE_ENROLLMENT"), listCourseEnrollments);
 router.get("/enrollment/status", permissionMiddleware("DEPPI_ROLES"), getEnrollmentsByStatusReport);
+router.get("/status/:status",permissionMiddleware("DEPPI_ROLES"), listEnrollmentsByStatus);
 
 router.patch(
   "/:enrollmentId/approve",

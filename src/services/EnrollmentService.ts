@@ -98,6 +98,24 @@ export async function getEnrollmentsByStatusReport() {
     total: item._count.status,
   }));
 }
+export async function getEnrollmentsByStatus(status: string) {
+  return prisma.enrollment.findMany({
+    where: { status },
+    include: {
+      course: {
+        select: { id: true, title: true },
+      },
+      student: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+} 
 
 export async function getCourseEnrollments(courseId: string) {
   return prisma.enrollment.findMany({
