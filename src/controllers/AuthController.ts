@@ -43,13 +43,29 @@ export class AuthController {
   }
 
   async login(request: Request, response: Response) {
-    const { email, password } = request.body;
+    const { email, password } = request.body ?? {};
 
-    const authService = new AuthService();
+    if (typeof email !== "string" || typeof password !== "string") {
+      return response.status(400).json({
+        message: "Informe e-mail e senha.",
+      });
+    }
 
-    const result = await authService.login(email, password);
+    try {
+      const authService = new AuthService();
+      const result = await authService.login(email, password);
 
-    return response.json(result);
+      return response.json(result);
+    } catch (error) {
+      if (error instanceof Error && error.message === "Email ou senha inválidos") {
+        return response.status(401).json({ message: error.message });
+      }
+
+      console.error("Erro ao realizar login:", error);
+      return response.status(500).json({
+        message: "Não foi possível realizar o login.",
+      });
+    }
   }
 
   async me(request: Request, response: Response) {

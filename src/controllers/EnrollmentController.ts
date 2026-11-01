@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 import * as enrollmentService from "../services/EnrollmentService";
+import {ENROLLMENT_STATUS} from "../constants/enrollment";
 
 async function getStudentId(userId: string) {
   const student = await prisma.student.findUnique({ where: { userId } });
@@ -24,7 +25,23 @@ export async function enroll(req: Request, res: Response) {
     return res.status(400).json({ error: err.message });
   }
 }
+export async function listEnrollmentsByStatus(req: Request, res: Response) {
+  const status = String(req.params.status ?? "").toUpperCase();
+  const validStatuses = Object.values(ENROLLMENT_STATUS);
 
+  if (!validStatuses.includes(status as (typeof validStatuses)[number])) {
+    return res.status(400).json({ error: "Situação inválida." });
+  }
+
+  try {
+    const enrollments = await enrollmentService.getEnrollmentsByStatus(status);
+    return res.status(200).json(enrollments);
+  } catch {
+    return res.status(500).json({
+      message: "Erro interno do servidor.",
+    });
+  }
+}
 export async function updateStatus(req: Request, res: Response) {
   const userId = (req as any).user.id;
   const enrollmentId = String(req.params.enrollmentId ?? "");

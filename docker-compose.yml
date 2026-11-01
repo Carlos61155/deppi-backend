@@ -1,10 +1,8 @@
-version: "3.9"
-
 services:
-  postgres:
+  db:
     image: postgres:15
-    container_name: deppi-extension
-    restart: always
+    container_name: deppi-extension-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: deppi_extension_user
       POSTGRES_PASSWORD: deppi_extension_password
@@ -12,7 +10,12 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - deppi_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deppi_extension_user -d deppi_extension_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
-  postgres_data:
+  deppi_postgres_data:
