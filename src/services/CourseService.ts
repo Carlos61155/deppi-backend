@@ -33,7 +33,28 @@ export class CourseService {
       },
     });
   }
-
+  async findByEnrollmentStatus(status: string) {
+  return prisma.course.findMany({
+    where: {
+      enrollments: {
+        some: { status },
+      },
+    },
+    include: {
+      enrollments: {
+        where: { status },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: {
+      startDate: "desc",
+    },
+  });
+}
   async closeCourse(courseId: string) {
     const courseExists = await prisma.course.findUnique({
       where: { id: courseId },
