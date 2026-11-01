@@ -55,9 +55,20 @@ export class AuthController {
       const authService = new AuthService();
       const result = await authService.login(email, password);
 
-      return response.json(result);
+      response.cookie("accessToken", result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+
+      return response.json({ message: "Login realizado" });
     } catch (error) {
-      if (error instanceof Error && error.message === "Email ou senha inválidos") {
+      if (
+        error instanceof Error &&
+        error.message === "Email ou senha inválidos"
+      ) {
         return response.status(401).json({ message: error.message });
       }
 
@@ -82,6 +93,15 @@ export class AuthController {
             role: {
               select: {
                 slug: true,
+                permissions: {
+                  select: {
+                    permission: {
+                      select: {
+                        slug: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -100,6 +120,11 @@ export class AuthController {
       name: user.name,
       email: user.email,
       roles: user.roles.map((userRole) => userRole.role.slug),
+      permissions: user.roles.flatMap((userRole) =>
+        userRole.role.permissions.map(
+          (rolePermission) => rolePermission.permission.slug,
+        ),
+      ),
     });
   }
 }
