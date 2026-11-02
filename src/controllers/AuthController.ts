@@ -79,6 +79,17 @@ export class AuthController {
     }
   }
 
+  async logout(_request: Request, response: Response) {
+    response.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+    });
+
+    return response.status(204).send();
+  }
+
   async me(request: Request, response: Response) {
     const user = await prisma.user.findUnique({
       where: {
