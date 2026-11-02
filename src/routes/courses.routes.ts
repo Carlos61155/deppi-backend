@@ -17,8 +17,9 @@ router.get("/courses", permissionMiddleware("VIEW_COURSES"), controller.list);
 
 router.put("/courses/:id", permissionMiddleware("UPDATE_COURSES"), controller.update);
 router.delete("/courses/:id", permissionMiddleware("DELETE_COURSES"), controller.remove);
-router.get("/courses/:id/enrollments", permissionMiddleware("DEPPI_ROLES"), controller.getCourseEnrollmentsReport);
 router.get("/reports/general", permissionMiddleware("DEPPI_ROLES"), controller.getGeneralReport);
+router.get("/reports/courses/status", permissionMiddleware("DEPPI_ROLES"), controller.getCoursesByStatusReport
+);
 router.patch("/courses/:id/closeCourse", permissionMiddleware("CLOSE_COURSE"), controller.closeCourse);
 
 router.post("/courses/:id/cover", permissionMiddleware("CREATE_COURSES"), upload.single("cover"), coverController.upload);

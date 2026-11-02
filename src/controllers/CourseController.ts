@@ -73,6 +73,17 @@ export class CourseController {
     }
   }
 
+  async getCoursesByStatusReport(req: Request, res: Response) {
+  try {
+    const report = await courseService.getCoursesByStatusReport();
+    return res.status(200).json(report);
+  } catch {
+    return res.status(500).json({
+      message: "Erro ao buscar cursos por situação.",
+    });
+  }
+}
+
   async closeCourse(req: Request, res: Response) {
     try {
       const courseId = req.params.id
