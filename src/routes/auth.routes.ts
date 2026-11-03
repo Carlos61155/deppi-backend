@@ -14,13 +14,13 @@ const authController = new AuthController();
 const emailService = new SmtpEmailService();
 const passwordRecoveryService = new PasswordRecoveryService(emailService);
 const passwordRecoveryController = new PasswordRecoveryController(
-    passwordRecoveryService
+  passwordRecoveryService,
 );
 
 authRoutes.post(
   "/register",
   validate(registerStudentSchema),
-  authController.registerStudent
+  authController.registerStudent,
 );
 
 authRoutes.post(
@@ -28,7 +28,8 @@ authRoutes.post(
   AuthMiddleware,
   permissionMiddleware("MANAGE_ROLES"),
   validate(registerCivilServantSchema),
-  (request, response) => authController.registerCivilServant(request, response, "DEPPI")
+  (request, response) =>
+    authController.registerCivilServant(request, response, "DEPPI"),
 );
 
 authRoutes.post(
@@ -36,21 +37,24 @@ authRoutes.post(
   AuthMiddleware,
   permissionMiddleware("DEPPI_ROLES"),
   validate(registerCivilServantSchema),
-  (request, response) => authController.registerCivilServant(request, response, "PROFESSOR")
+  (request, response) =>
+    authController.registerCivilServant(request, response, "PROFESSOR"),
 );
 
 authRoutes.post("/login", authController.login);
 
+authRoutes.post("/logout", authController.logout.bind(authController));
+
 authRoutes.get("/me", AuthMiddleware, authController.me);
 
 authRoutes.post(
-    "/forgot-password",
-    passwordRecoveryController.forgotPassword.bind(passwordRecoveryController)
+  "/forgot-password",
+  passwordRecoveryController.forgotPassword.bind(passwordRecoveryController),
 );
 
 authRoutes.post(
-    "/reset-password",
-    passwordRecoveryController.resetPassword.bind(passwordRecoveryController)
+  "/reset-password",
+  passwordRecoveryController.resetPassword.bind(passwordRecoveryController),
 );
 
 export { authRoutes };
