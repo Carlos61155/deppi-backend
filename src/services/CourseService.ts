@@ -33,6 +33,49 @@ export class CourseService {
       },
     });
   }
+  async findByEnrollmentStatus(status: string) {
+  return prisma.course.findMany({
+    where: {
+      enrollments: {
+        some: { status },
+      },
+    },
+    include: {
+      enrollments: {
+        where: { status },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+        },
+      },
+    },
+    orderBy: {
+      startDate: "desc",
+    },
+  });
+}
+
+async getCoursesByStatusReport() {
+  const grouped = await prisma.course.groupBy({
+    by: ["status"],
+    _count: {
+      _all: true,
+    },
+  });
+
+  const statuses = [
+    "UNDER_REVIEW",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "CLOSED",
+  ] as const;
+
+  return statuses.map((status) => ({
+    status,
+    total: grouped.find((item) => item.status === status)?._count._all ?? 0,
+  }));
+}
 
   async closeCourse(courseId: string) {
     const courseExists = await prisma.course.findUnique({
@@ -49,6 +92,7 @@ export class CourseService {
       },
       data: {
         isActive: false,
+        status: "CLOSED",
       },
     });
   }

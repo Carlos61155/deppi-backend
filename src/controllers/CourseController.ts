@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { CourseService } from '../services/CourseService';
+import { ENROLLMENT_STATUS } from "../constants/enrollment";
 
 const courseService = new CourseService();
 
@@ -16,14 +17,30 @@ export class CourseController {
   }
 
   async list(req: Request, res: Response): Promise<Response> {
-    try {
-      const courses = await courseService.findAll();
+  try {
+    const status = req.query.status?.toString().toUpperCase();
 
+    if (status) {
+      const validStatuses = Object.values(ENROLLMENT_STATUS);
+
+      if (!validStatuses.includes(status as (typeof validStatuses)[number])) {
+        return res.status(400).json({
+          message: `Situação inválida. Valores permitidos: ${validStatuses.join(", ")}`,
+        });
+      }
+
+      const courses = await courseService.findByEnrollmentStatus(status);
       return res.status(200).json(courses);
-    } catch (error: any) {
-      return res.status(500).json({ message: error.message || "Erro interno do servidor." });
     }
+
+    const courses = await courseService.findAll();
+    return res.status(200).json(courses);
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message || "Erro interno do servidor.",
+    });
   }
+}
 
   async getCourseEnrollmentsReport(req: Request, res: Response) {
     try {
@@ -55,6 +72,17 @@ export class CourseController {
       });
     }
   }
+
+  async getCoursesByStatusReport(req: Request, res: Response) {
+  try {
+    const report = await courseService.getCoursesByStatusReport();
+    return res.status(200).json(report);
+  } catch {
+    return res.status(500).json({
+      message: "Erro ao buscar cursos por situação.",
+    });
+  }
+}
 
   async closeCourse(req: Request, res: Response) {
     try {
