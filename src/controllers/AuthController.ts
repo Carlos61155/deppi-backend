@@ -42,7 +42,7 @@ export class AuthController {
     }
   }
 
-  async login(request: Request, response: Response) {
+  /* async login(request: Request, response: Response) {
     const { email, password } = request.body ?? {};
 
     if (typeof email !== "string" || typeof password !== "string") {
@@ -77,6 +77,16 @@ export class AuthController {
         message: "Não foi possível realizar o login.",
       });
     }
+  } */
+
+  async login(request: Request, response: Response) {
+    const { email, password } = request.body;
+
+    const authService = new AuthService();
+
+    const result = await authService.login(email, password);
+
+    return response.status(200).json(result);
   }
 
   async logout(_request: Request, response: Response) {
