@@ -4,15 +4,14 @@ import { prisma } from "../lib/prisma";
 import { RegisterData } from "../model/Auth";
 import { RegisterStudentDto } from "@/model/RegisterStudentDto";
 import { RegisterCivilServantDto } from "@/model/RegisterCivilServantDto";
+import { randomUUID } from "node:crypto";
 
 export class AuthService {
-
   async registerStudent(student: RegisterStudentDto) {
-
     const userAlreadyExists = await prisma.user.findUnique({
       where: {
-        email: student.email
-      }
+        email: student.email,
+      },
     });
 
     if (userAlreadyExists) {
@@ -56,35 +55,37 @@ export class AuthService {
           create: {
             socialName: student.socialName,
             occupation: student.occupation,
-            perCapitaIncome: student.perCapitaIncome
-          }
+            perCapitaIncome: student.perCapitaIncome,
+          },
         },
 
         roles: {
           create: {
             role: {
               connect: {
-                slug: "ALUNO"
-              }
-            }
-          }
-        }
-      }
+                slug: "ALUNO",
+              },
+            },
+          },
+        },
+      },
     });
 
     return {
       id: user.id,
       name: user.name,
-      email: user.email
+      email: user.email,
     };
   }
 
-  async registerCivilServant(civilServant: RegisterCivilServantDto, role: string) {
-
+  async registerCivilServant(
+    civilServant: RegisterCivilServantDto,
+    role: string,
+  ) {
     const userAlreadyExists = await prisma.user.findUnique({
       where: {
-        email: civilServant.email
-      }
+        email: civilServant.email,
+      },
     });
 
     if (userAlreadyExists) {
@@ -159,9 +160,10 @@ export class AuthService {
             institutionAppointmentDate: civilServant.institutionAppointmentDate
               ? new Date(civilServant.institutionAppointmentDate)
               : undefined,
-            institutionExerciseStartDate: civilServant.institutionExerciseStartDate
-              ? new Date(civilServant.institutionExerciseStartDate)
-              : undefined,
+            institutionExerciseStartDate:
+              civilServant.institutionExerciseStartDate
+                ? new Date(civilServant.institutionExerciseStartDate)
+                : undefined,
             positionAppointmentDate: civilServant.positionAppointmentDate
               ? new Date(civilServant.positionAppointmentDate)
               : undefined,
@@ -176,62 +178,69 @@ export class AuthService {
             bank: civilServant.bank,
             bankBranch: civilServant.bankBranch,
             checkingAccount: civilServant.checkingAccount,
-          }
+          },
         },
 
         roles: {
           create: {
             role: {
               connect: {
-                slug: role
-              }
-            }
-          }
-        }
-      }
+                slug: role,
+              },
+            },
+          },
+        },
+      },
     });
 
     return {
       id: user.id,
       name: user.name,
-      email: user.email
+      email: user.email,
     };
   }
 
   async login(email: string, password: string) {
-
     const user = await prisma.user.findUnique({
       where: {
-        email
-      }
+        email,
+      },
     });
 
     if (!user) {
       throw new Error("Email ou senha inválidos");
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      user.passwordHash
-    );
+    const passwordMatch = await bcrypt.compare(password, user.passwordHash);
 
     if (!passwordMatch) {
       throw new Error("Email ou senha inválidos");
     }
 
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const jti = randomUUID();
+
+    await prisma.authSession.create({
+      data: {
+        id: jti,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
     const token = jwt.sign(
       {
-        sub: user.id
+        sub: user.id,
       },
       process.env.JWT_SECRET!,
       {
-        expiresIn: "1d"
-      }
+        jwtid: jti,
+        expiresIn: "1d",
+      },
     );
 
     return {
-      token
+      token,
     };
   }
-
 }

@@ -3,6 +3,7 @@ import { AuthService } from "../services/AuthService";
 import { prisma } from "../lib/prisma";
 import { RegisterStudentDto } from "@/model/RegisterStudentDto";
 import { RegisterCivilServantDto } from "@/model/RegisterCivilServantDto";
+import jwt from "jsonwebtoken";
 
 export class AuthController {
   async registerStudent(request: Request, response: Response) {
@@ -42,43 +43,6 @@ export class AuthController {
     }
   }
 
-  /* async login(request: Request, response: Response) {
-    const { email, password } = request.body ?? {};
-
-    if (typeof email !== "string" || typeof password !== "string") {
-      return response.status(400).json({
-        message: "Informe e-mail e senha.",
-      });
-    }
-
-    try {
-      const authService = new AuthService();
-      const result = await authService.login(email, password);
-
-      response.cookie("accessToken", result.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 24 * 60 * 60 * 1000,
-      });
-
-      return response.json({ message: "Login realizado" });
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "Email ou senha inválidos"
-      ) {
-        return response.status(401).json({ message: error.message });
-      }
-
-      console.error("Erro ao realizar login:", error);
-      return response.status(500).json({
-        message: "Não foi possível realizar o login.",
-      });
-    }
-  } */
-
   async login(request: Request, response: Response) {
     const { email, password } = request.body;
 
@@ -89,13 +53,27 @@ export class AuthController {
     return response.status(200).json(result);
   }
 
-  async logout(_request: Request, response: Response) {
-    response.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-    });
+  async logout(request: Request, response: Response) {
+    const token =
+      request.cookies?.accessToken ??
+      request.headers.authorization?.split(" ")[1];
+
+    if (token) {
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET!,
+      ) as jwt.JwtPayload;
+
+      if (decoded.jti) {
+        await prisma.authSession.updateMany({
+          where: {
+            id: decoded.jti,
+            revokedAt: null,
+          },
+          data: { revokedAt: new Date() },
+        });
+      }
+    }
 
     return response.status(204).send();
   }

@@ -43,7 +43,11 @@ authRoutes.post(
 
 authRoutes.post("/login", authController.login);
 
-authRoutes.post("/logout", authController.logout.bind(authController));
+authRoutes.post(
+  "/logout",
+  AuthMiddleware,
+  authController.logout.bind(authController),
+);
 
 authRoutes.get("/me", AuthMiddleware, authController.me);
 

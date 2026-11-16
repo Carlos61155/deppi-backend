@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
+import { prisma } from "@/lib/prisma";
 
 export async function AuthMiddleware(
   req: Request,
@@ -15,11 +16,38 @@ export async function AuthMiddleware(
     });
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { sub: string };
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET!,
+    ) as jwt.JwtPayload;
 
-  req.user = {
-    id: decoded.sub,
-  };
+    if (!decoded.sub || !decoded.jti) {
+      return res.status(401).json({ error: "Token inválido" });
+    }
 
-  next();
+    const session = await prisma.authSession.findUnique({
+      where: { id: decoded.jti },
+    });
+
+    if (
+      !session ||
+      session.userId !== decoded.sub ||
+      session.revokedAt ||
+      session.expiresAt <= new Date()
+    ) {
+      return res.status(401).json({
+        error: "Sessão encerrada ou expirada",
+      });
+    }
+
+    req.user = { id: decoded.sub };
+    return next();
+  } catch (error) {
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: "Token inválido ou expirado" });
+    }
+
+    return next(error);
+  }
 }
