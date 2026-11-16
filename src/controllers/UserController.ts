@@ -59,5 +59,14 @@ export class UserController {
             return res.status(404).json({ message: error.message || "Nenhum usuário encontrado" });
         }
     }
-
+     async me(req: Request, res: Response) {
+        try {
+            const profile = await userService.findOwnProfile(req.user.id);
+             return res.status(200).json(profile);
+    } catch (error: any) {
+            return res.status(404).json({
+        message: error.message || "Usuário não encontrado",
+    });
+  }
+}
 }
