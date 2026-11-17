@@ -98,4 +98,52 @@ export class UserService {
       total,
     };
   }
+  async findOwnProfile(id: string) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true,
+      roles: {
+        select: {
+          role: {
+            select: {
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      },
+      civilServant: {
+        select: {
+          preferredName: true,
+          registration: true,
+          position: true,
+          institutionalEmail: true,
+        },
+      },
+      student: {
+        select: {
+          socialName: true,
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    throw new Error("Usuário não encontrado");
+  }
+
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt,
+    roles: user.roles.map(({ role }) => role),
+    civilServant: user.civilServant,
+    student: user.student,
+  };
+}
 }
